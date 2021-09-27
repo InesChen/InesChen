@@ -1,0 +1,106 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Sun Feb 28 10:43:22 2021
+
+@author: Ines
+"""
+
+import numpy as np
+import pandas as pd
+
+import gaufit_err_est
+
+
+import matplotlib.pyplot as plt
+
+from scipy import integrate
+
+
+from astropy.modeling import models
+
+
+
+table=pd.read_csv('/Users/Ines/Desktop/thesis_result/var_table_combine_fit_flux_update_refit_uncertaity.csv',index_col=0)
+
+g1amp_err=[]
+g1sta_err=[]
+g1mean_err=[]
+
+g2amp_err=[]
+g2sta_err=[]
+g2mean_err=[]
+
+
+g1flux_err=[]
+g2flux_err=[]
+
+Bflux_err=[]
+Nflux_err=[]
+
+
+
+x_range=np.linspace(6450,6700,1000)
+
+
+for i in range(len(table)):
+    para_err=gaufit_err_est.err_est(table['g1_amp'][i],table['g1_sta'][i],table['g1_mean'][i],table['g2_amp'][i],table['g2_sta'][i],table['g2_mean'][i])
+    
+    para_error=para_err*table['y uncertainty'][i]
+    
+    g1=models.Gaussian1D(amplitude=table['g1_amp'][i], mean=table['g1_mean'][i], stddev=table['g1_sta'][i])
+    g2=models.Gaussian1D(amplitude=table['g2_amp'][i], mean=table['g2_mean'][i], stddev=table['g2_sta'][i])
+         
+ 
+    c1=sum(g1(x_range))*(6700-6450)/1000
+    c2=sum(g2(x_range))*(6700-6450)/1000   
+
+
+    
+    da1,dm1,ds1=g1.fit_deriv(x_range,table['g1_amp'][i],table['g1_mean'][i],table['g1_sta'][i])
+    da2,dm2,ds2=g2.fit_deriv(x_range,table['g2_amp'][i],table['g2_mean'][i],table['g2_sta'][i])
+    
+    
+    g1_uncert=np.sqrt((np.square(para_error[0])*np.square(sum(da1))) + (np.square(para_error[1])*np.square(sum(ds1))) + (np.square(para_error[2])*np.square(sum(dm1))))
+    g2_uncert=np.sqrt((np.square(para_error[3])*np.square(sum(da2))) + (np.square(para_error[4])*np.square(sum(ds2))) + (np.square(para_error[5])*np.square(sum(dm2))))    
+    
+    g1flux_err.append(g1_uncert)
+    g2flux_err.append(g2_uncert)
+    
+    
+
+    if table['g1_sta'][i] > table['g2_sta'][i]:
+        Bflux_err.append(g1_uncert)
+        Nflux_err.append(g2_uncert)
+    else:
+        Bflux_err.append(g2_uncert)
+        Nflux_err.append(g1_uncert)
+    
+        
+        
+    
+    g1amp_err.append(para_error[0])
+    g1sta_err.append(para_error[1])
+    g1mean_err.append(para_error[2])
+    
+    g2amp_err.append(para_error[3])
+    g2sta_err.append(para_error[4])
+    g2mean_err.append(para_error[5])
+    
+    
+    
+
+table['g1amp_err']=g1amp_err
+table['g1sta_err']=g1sta_err
+table['g1mean_err']=g1mean_err
+
+
+table['g2amp_err']=g2amp_err
+table['g2sta_err']=g2sta_err
+table['g2mean_err']=g2mean_err
+
+
+table['Bflux err']=Bflux_err
+table['Nflux err']=Nflux_err
+
+
+#table.to_csv('/Users/Ines/Desktop/thesis_result/var_table_combine_fit_flux_update_refit_uncertaity_v5.csv')
