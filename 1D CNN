@@ -1,0 +1,23 @@
+import torch
+
+class Net(torch.nn.Module):
+
+def __init__(self):
+        super(Net, self).__init__()
+        self.C1 = torch.nn.Conv1d(1, 10, 200)
+        self.S2 = torch.nn.AvgPool1d(2, stride=2)    
+        self.C3 = torch.nn.Conv1d(10, 30,100)    
+        self.S4 = nn.AvgPool1d(5, stride=2)       
+        self.C5 = nn.Conv1d(30, 36, 56)     
+        self.F6 = nn.Linear(3384, 94)
+        self.Out= torch.nn.Linear(94, 2)
+ def forward(self, x):
+        x = F.relu(self.C1(x))
+        x = self.S2(x)
+        x = F.relu(self.C3(x))        
+        x = self.S4(x)
+        x = F.relu(self.C5(x))
+        x = x.view(x.size(0),-1)
+        x =F.relu(self.F6(x))
+        x = self.Out(x)
+        return x
